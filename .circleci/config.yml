@@ -1,0 +1,75 @@
+version: 2.1
+workflows:
+  ci-workflow:
+    jobs:
+      - tests:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*$/
+      - build_and_push_image:
+          requires:
+            - tests
+          filters:
+            branches:
+              only:
+                - development
+                - stage
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*$/
+          context:
+            - ci
+
+jobs:
+  build_lint_test:
+    docker:
+      - image: circleci/node:10.24.1
+    steps:
+      - checkout
+      - run: npm install
+      - run: npm run lint
+      - run: npm run test:cov
+  build_and_push_image:
+    docker:
+      - image: circleci/node:10.24.1
+    steps:
+      - attach_workspace:
+          at: ~/
+      - setup_remote_docker:
+          version: 19.03.13
+          docker_layer_caching: true
+      - restore_cache:
+          keys:
+            - v1-{{ .Branch }}
+          paths:
+            - /caches/app.tar
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/app.tar | true
+      - run:
+          name: Build application Docker image
+          command: |
+            docker build --cache-from=app -t app .
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/app.tar app
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - /caches/app.tar
+      - deploy:
+          name: Push application Docker image
+          command: |
+            docker login "$REGESTRY_URL" --username "$REGESTRY_LOGIN" -p "${REGESTRY_PASS}"
+            if [ "${CIRCLE_TAG}" != "" ]; then
+              docker tag app "${REGESTRY_URL}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}"
+              docker push "${REGESTRY_URL}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}"
+            else
+              docker tag app "${REGESTRY_URL}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}-${CIRCLE_SHA1}"
+              docker push "${REGESTRY_URL}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}-${CIRCLE_SHA1}"
+            fi
+
+

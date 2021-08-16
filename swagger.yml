@@ -1,0 +1,126 @@
+tags:
+  - name: rides
+    description: rides API
+
+paths:
+  # [GET] rides pagination
+  /rides:
+    get:
+      tags:
+        - rides
+      summary: Filter Rides by page and limit
+      parameters:
+        - name: page
+          in: query
+          description: page
+          required: true
+          type: integer
+          minimum: 1
+        - name: limit
+          in: query
+          description: limit
+          required: true
+          type: integer
+          minimum: 1
+      responses:
+        200:
+          description: 'OK'
+        404:
+          description: 'Not Found'
+        500:
+          description: 'Server Error'
+
+  # [GET] rides
+  /rides/:
+    get:
+      tags:
+        - rides
+      summary: Find All Users
+      responses:
+        200:
+          description: 'OK'
+        500:
+          description: 'Server Error'
+        404:
+          description: 'Not Found'
+
+    # [POST] rides
+    post:
+      tags:
+        - rides
+      summary: Create rides
+      parameters:
+        - name: body
+          in: body
+          description: rides Data
+          required: true
+          schema:
+            $ref: '#/definitions/rides'
+      responses:
+        201:
+          description: 'Created'
+        400:
+          description: 'Bad Request'
+        409:
+          description: 'Conflict'
+        500:
+          description: 'Server Error'
+
+  # [GET] rides/id
+  /rides/{id}:
+    get:
+      tags:
+        - rides
+      summary: Find Rides By Id
+      parameters:
+        - name: id
+          in: path
+          description: rides Id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: 'OK'
+        404:
+          description: 'Not Found'
+        500:
+          description: 'Server Error'
+
+# definitions
+definitions:
+  rides:
+    type: object
+    required:
+      - start_lat
+      - start_long
+      - end_lat
+      - end_long
+      - rider_name
+      - driver_name
+      - driver_vehicle
+    properties:
+      start_lat:
+        type: integer
+        description: rides start lat
+      start_long:
+        type: integer
+        description: rides start long
+      end_lat:
+        type: integer
+        description: rides end lat
+      end_long:
+        type: integer
+        description: rides end long
+      rider_name:
+        type: string
+        description: rider name
+      driver_name:
+        type: string
+        description: driver name
+      driver_vehicle:
+        type: string
+        description: driver vehicle
+
+schemes:
+  - https
+  - http
