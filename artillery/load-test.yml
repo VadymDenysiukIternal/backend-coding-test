@@ -1,0 +1,38 @@
+config:
+  ensure:
+    p99: 50
+  target: "http://localhost:8010"
+  phases:
+    - duration: 30
+      arrivalRate: 200
+      name: Load Testing
+scenarios:
+  - name: "Health Check [GET /health]"
+    flow:
+      - get:
+          url: "/health"
+  - name: "Create Ride [POST /rides]"
+    flow:
+      - post:
+          url: "/rides"
+          json:
+            start_lat: 5
+            start_long: 95
+            end_lat: 5
+            end_long: 95
+            rider_name: "{{ $randomString() }}"
+            driver_name: "{{ $randomString() }}"
+            driver_vehicle: "{{ $randomString() }}"
+  - name: "Get Ride by ID [GET /rides/{id}]"
+    flow:
+      - get:
+          url: "/rides/{{ $randomNumber(1, 100) }}"
+  - name: "Get All Rides [GET /rides]"
+    flow:
+      - get:
+          url: "/rides"
+  - name: "Get Ride by Page and Limit [GET /rides?page?limit]"
+    flow:
+      - get:
+          url: "/rides?page={{ $randomNumber(1, 5) }}?limit={{ $randomNumber(1, 5) }}"
+
